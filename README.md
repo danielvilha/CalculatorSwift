@@ -74,9 +74,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **Daniel Freitas Vilha** - *My works* - [Github Daniel Vilha](https://github.com/danielvilha)
 
 ## License
 
@@ -84,6 +82,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
+* Working again with Swift
 * Inspiration
 * etc
