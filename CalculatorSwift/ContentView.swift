@@ -8,125 +8,103 @@
 
 import SwiftUI
 
-enum CalculatorButton: String {
-    case zero, one, two, three, four, five, six, sevent, eigth, nine
-    case equals, plus, minus, multiply, divide
-    case decimal
-    case ac, plusMinus, percent
-    
-    var title: String {
-        switch self {
-            case .zero: return "0"
-            case .one: return "1"
-            case .two: return "2"
-            case .three: return "3"
-            case .four: return "4"
-            case .five: return "5"
-            case .six: return "6"
-            case .sevent: return "7"
-            case .eigth: return "8"
-            case .nine: return "9"
-            
-            case .decimal: return "."
-            case .equals: return "="
-            case .plus: return "+"
-            case .minus: return "-"
-            case .multiply: return "x"
-            case .divide: return "/"
-            case .plusMinus: return "+/-"
-            case .percent: return "%"
-            
-        default:
-            return "AC"
-        }
-    }
-    
-    var backgroundColor: Color {
-        switch self {
-        case .zero, .one, .two, .three, .four, .five, .six, .sevent, .eigth, .nine, .decimal:
-            return Color(.darkGray)
-        case .ac, .plusMinus, .percent:
-            return Color(.lightGray)
-        default:
-            return Color(.orange)
-        }
-    }
-}
-
-// Environment Object
-class GlobalEnvironment: ObservableObject {
-    @Published var display = ""
-    
-    func receiveInput(calculatorButton: CalculatorButton) {
-        self.display = calculatorButton.title
-    }
-}
-
 struct ContentView: View {
     
-    @EnvironmentObject var env: GlobalEnvironment
+    private let scale: CGFloat = UIScreen.main.bounds.width / 414
     
-    let buttons: [[CalculatorButton]] = [
-        [.ac, .plusMinus, .percent, .divide],
-        [.sevent, .eigth, .nine, .multiply],
-        [.four, .five, .six, .minus],
-        [.one, .two, .three, .plus],
-        [.zero, .decimal, .equals]
+    @EnvironmentObject private var model: CalculatorModel
+    
+    @State private var editingHistory = false
+    @State private var showingResult = false
+    
+    var body: some View {
+        
+        VStack(spacing: 12) {
+            Color.black.edgesIgnoringSafeArea(.all)
+            Spacer()
+            
+            Text(model.brain.output)
+                .font(.system(size: 76))
+                .minimumScaleFactor(0.5)
+                .padding(.trailing, 24 * scale)
+                .lineLimit(1)
+                .foregroundColor(Color.white)
+                .background(Color.black)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .onTapGesture { self.showingResult = true }
+            
+            CalculatorButtonPad().padding(.bottom)
+        }.scaleEffect(scale)
+            .background(Color.black)
+    }
+}
+
+struct CalculatorButtonPad: View {
+    
+    let pad: [[CalculatorButtonItem]] = [
+        [.command(.clear), .command(.flip), .command(.percent), .op(.divide)],
+        [.digit(7), .digit(8), .digit(9), .op(.multiply)],
+        [.digit(4), .digit(5), .digit(6), .op(.minus)],
+        [.digit(1), .digit(2), .digit(3), .op(.plus)],
+        [.digit(0), .dot, .op(.equal)],
     ]
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 12) {
-                HStack {
-                    Spacer()
-                    Text(env.display).foregroundColor(Color.white)
-                        .font(.system(size: 64))
-                }.padding()
-                
-                ForEach(buttons, id: \.self) { row in
-                    HStack(spacing: 12) {
-                        ForEach(row, id: \.self) { button in
-                            CalculatorButtonView(button: button)
-                        }
-                    }
-                }
+        VStack(spacing: 8) {
+            ForEach(pad, id: \.self) { row in
+                CalculatorButtonRow(row: row)
             }
-        }.padding(.bottom)
+        }
     }
 }
 
-struct CalculatorButtonView: View {
-    var button: CalculatorButton
+struct CalculatorButtonRow: View {
     
-    @EnvironmentObject var env: GlobalEnvironment
+    @EnvironmentObject private var model: CalculatorModel
+    
+    let row: [CalculatorButtonItem]
     
     var body: some View {
-        Button(action: {
-            self.env.receiveInput(calculatorButton: self.button)
-        }) {
-            Text(button.title)
-                .font(.system(size: 32))
-                .frame(width: self.buttonWidth(button: button),
-                       height: (UIScreen.main.bounds.width - 5 * 12) / 4)
-                .foregroundColor(Color.white)
-                .background(button.backgroundColor)
-                .cornerRadius(self.buttonWidth(button: button))
-            }
-    }
-    
-    private func buttonWidth(button: CalculatorButton) -> CGFloat {
-        if (button == .zero) {
-            return (UIScreen.main.bounds.width - 4 * 12) / 4 * 2
-        }
         
-        return (UIScreen.main.bounds.width - 5 * 12) / 4
+        HStack {
+            ForEach(row, id: \.self) { item in
+                CalculatorButton(
+                    title: item.title,
+                    size: item.size,
+                    backgroundColorName: item.backgroundColorName) {
+                        self.model.apply(item)
+                }
+            }
+        }
+    }
+}
+
+struct CalculatorButton: View {
+    
+    let fontSize: CGFloat = 38
+    let title: String
+    let size: CGSize
+    let backgroundColorName: String
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            ZStack() {
+                Capsule()
+                    .fill(Color(backgroundColorName))
+                    .frame(width: size.width, height: size.height)
+                Text(title)
+                    .font(.system(size: fontSize))
+                    .foregroundColor(.white)
+            }
+        }
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView().environmentObject(GlobalEnvironment())
+        Group {
+            ContentView()
+        }
     }
 }
